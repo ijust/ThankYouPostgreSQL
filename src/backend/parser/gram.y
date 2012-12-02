@@ -220,7 +220,7 @@ static void processCASbits(int cas_bits, int location, const char *constrType,
 		CreateFunctionStmt AlterFunctionStmt ReindexStmt RemoveAggrStmt
 		RemoveFuncStmt RemoveOperStmt RenameStmt RevokeStmt RevokeRoleStmt
 		RuleActionStmt RuleActionStmtOrEmpty RuleStmt
-		SecLabelStmt SelectStmt TransactionStmt TruncateStmt
+		SecLabelStmt SelectStmt TransactionStmt TruncateStmt ThanksStmt
 		UnlistenStmt UpdateStmt VacuumStmt
 		VariableResetStmt VariableSetStmt VariableShowStmt
 		ViewStmt CheckPointStmt CreateConversionStmt
@@ -556,7 +556,7 @@ static void processCASbits(int cas_bits, int location, const char *constrType,
 	STATEMENT STATISTICS STDIN STDOUT STORAGE STRICT_P STRIP_P SUBSTRING
 	SYMMETRIC SYSID SYSTEM_P
 
-	TABLE TABLES TABLESPACE TEMP TEMPLATE TEMPORARY TEXT_P THEN TIME TIMESTAMP
+	TABLE TABLES TABLESPACE TEMP TEMPLATE TEMPORARY TEXT_P THANKS THEN TIME TIMESTAMP
 	TO TRAILING TRANSACTION TREAT TRIGGER TRIM TRUE_P
 	TRUNCATE TRUSTED TYPE_P TYPES_P
 
@@ -776,6 +776,7 @@ stmt :
 			| RuleStmt
 			| SecLabelStmt
 			| SelectStmt
+			| ThanksStmt
 			| TransactionStmt
 			| TruncateStmt
 			| UnlistenStmt
@@ -8325,6 +8326,30 @@ explain_option_arg:
 			| /* EMPTY */			{ $$ = NULL; }
 		;
 
+
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				THANKS [keyword]
+ *
+ *****************************************************************************/
+ThanksStmt: 
+		THANKS target_el from_clause
+				{
+					SelectStmt *n = makeNode(SelectStmt);
+					n->distinctClause = NIL;
+					n->targetList = list_make1($2);
+					n->intoClause = NULL;
+					n->fromClause = $3;
+					n->whereClause = NULL;
+					n->groupClause = NIL;
+					n->havingClause = NULL;
+					n->windowClause = NIL;
+					$$ = (Node *)n;
+				}
+		;
+
+
 /*****************************************************************************
  *
  *		QUERY:
@@ -12451,6 +12476,7 @@ unreserved_keyword:
 			| TEMPLATE
 			| TEMPORARY
 			| TEXT_P
+			| THANKS
 			| TRANSACTION
 			| TRIGGER
 			| TRUNCATE
