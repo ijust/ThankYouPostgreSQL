@@ -230,6 +230,7 @@ static void processCASbits(int cas_bits, int location, const char *constrType,
 
 %type <node>	select_no_parens select_with_parens select_clause
 				simple_select values_clause
+%type <node>	thanks_cmd
 
 %type <node>	alter_column_default opclass_item opclass_drop alter_using
 %type <ival>	add_drop opt_asc_desc opt_nulls_order
@@ -8330,25 +8331,51 @@ explain_option_arg:
 /*****************************************************************************
  *
  *		QUERY:
- *				THANKS [keyword]
+ *				THANKS a_expr
  *
  *****************************************************************************/
 ThanksStmt: 
-		THANKS target_el from_clause
-				{
-					SelectStmt *n = makeNode(SelectStmt);
-					n->distinctClause = NIL;
-					n->targetList = list_make1($2);
-					n->intoClause = NULL;
-					n->fromClause = $3;
-					n->whereClause = NULL;
-					n->groupClause = NIL;
-					n->havingClause = NULL;
-					n->windowClause = NIL;
-					$$ = (Node *)n;
-				}
-		;
+		THANKS thanks_cmd		{ $$ = (Node *) $2; }
+		| THANKS ',' thanks_cmd	{ $$ = (Node *) $3; }
+	;
 
+thanks_cmd:
+		a_expr
+			{
+				ResTarget *rt = makeNode(ResTarget);
+				RangeVar *from = NULL;
+				Node *colref = NULL;
+				A_Expr *where = NULL;
+				SelectStmt *n = makeNode(SelectStmt);
+				
+				/* target_el */
+				rt->name = NULL;
+				rt->indirection = NIL;
+				rt->val = (Node *)makeColumnRef("res", NIL, @1, yyscanner);;
+				rt->location = @1;
+
+                /* table_ref */
+                from = makeRangeVar(NULL, "thanks", @1);
+				from->inhOpt = INH_DEFAULT;
+				from->alias = NULL;
+					
+				/* where clause */
+				colref = (Node *) makeColumnRef("req", NIL, @1, yyscanner);
+				where = makeSimpleA_Expr(AEXPR_OP, "=", colref, $1, @1);
+				
+				/* Select Stmt */
+				n->distinctClause = NIL;
+				n->targetList = list_make1(rt);
+				n->intoClause = NULL;
+				n->fromClause = list_make1(from);
+				n->whereClause = (Node *) where;
+				n->groupClause = NIL;
+				n->havingClause = NULL;
+				n->windowClause = NIL;
+				n->isThanks = TRUE;
+				$$ = (Node *)n;
+			}
+		;
 
 /*****************************************************************************
  *
