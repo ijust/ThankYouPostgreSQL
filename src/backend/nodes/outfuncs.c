@@ -2048,6 +2048,7 @@ _outSelectStmt(StringInfo str, const SelectStmt *node)
 	WRITE_BOOL_FIELD(all);
 	WRITE_NODE_FIELD(larg);
 	WRITE_NODE_FIELD(rarg);
+	WRITE_BOOL_FIELD(isThanks);
 }
 
 static void

@@ -1044,6 +1044,7 @@ typedef struct SelectStmt
 	bool		all;			/* ALL specified? */
 	struct SelectStmt *larg;	/* left child */
 	struct SelectStmt *rarg;	/* right child */
+	bool        isThanks;       /* thank you everyone */
 	/* Eventually add fields for CORRESPONDING spec here */
 } SelectStmt;
 
