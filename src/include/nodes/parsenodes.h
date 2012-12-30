@@ -150,6 +150,7 @@ typedef struct Query
 
 	List	   *constraintDeps; /* a list of pg_constraint OIDs that the query
 								 * depends on to be semantically valid */
+	bool        isThanks;
 } Query;
 
 
